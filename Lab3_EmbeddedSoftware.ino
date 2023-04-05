@@ -17,6 +17,8 @@ int freq2 = 0;
 
 struct frequencyStruct frequencies;
 
+SemaphoreHandle_t xSemaphore = NULL;
+
 //bool measurePerformance = false; //setting this to true enables the performance measuring code in loop(); see loop() for more info
 //float longestPerformance = 0.0; //longest completion time in microseconds
 //int testIterations = 10000; //number of test iterations the timing loop should run
@@ -178,6 +180,19 @@ void Task2RTOS(void* pvParameter) {
     else {
       freq1 = 0;
     }
+
+    if (xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /*We were able to obtain the semaphore and can now access the
+            shared resource.*/
+            frequencies.freq1 = (int) freq1;
+            xSemaphoreGive( xSemaphore );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+        }
     //Serial.println(freq1);
     
   }
@@ -233,6 +248,18 @@ void Task3RTOS(void* pvParameter) {
     else {
       freq2 = 0;
     }
+    if (xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /*We were able to obtain the semaphore and can now access the
+            shared resource.*/
+            frequencies.freq2 = (int) freq2;
+            xSemaphoreGive( xSemaphore );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+        }
     //Serial.println(freq1);
     
   }
@@ -323,8 +350,27 @@ void Task5RTOS(void* pvParameter) {
 
   xLastWakeTime = xTaskGetTickCount();
 
+  int freq1 = 0;
+  int freq2 = 0;
   while(true) {
     vTaskDelayUntil(&xLastWakeTime, (100/portTICK_RATE_MS));
+    
+    if (xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+    {
+        /*We were able to obtain the semaphore and can now access the
+        shared resource.*/
+        //Serial.println("Read Semaphore's good");
+        freq1 = frequencies.freq1;
+        freq2 = frequencies.freq2;
+        xSemaphoreGive( xSemaphore );
+    }
+    else
+    {
+      //Serial.println("Read Semaphore's BAD");
+
+        /* We could not obtain the semaphore and can therefore not access
+        the shared resource safely. */
+    }
     int freq1mapped = constrain(map(freq1, 300, 1000, 0, 99), 0, 99);
     int freq2mapped = constrain(map(freq2, 300, 1000, 0, 99), 0, 99);  
     Serial.print(freq1mapped);
