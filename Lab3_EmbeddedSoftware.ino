@@ -72,7 +72,7 @@ void setup() {
               "Task 3", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
-              3,        // priority
+              4,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
 
@@ -194,7 +194,7 @@ void Task1RTOS(void* pvParameters) {
   xLastWakeTime = xTaskGetTickCount();  
 
   while(true) {
-    vTaskDelayUntil(&xLastWakeTime, (4/portTICK_RATE_MS));
+    
     //Serial.println("wee");
     digitalWrite(T1_ANALOG_PORT, HIGH);
     delayMicroseconds(200);
@@ -203,6 +203,7 @@ void Task1RTOS(void* pvParameters) {
     digitalWrite(T1_ANALOG_PORT,HIGH);
     delayMicroseconds(30);
     digitalWrite(T1_ANALOG_PORT, LOW);
+    vTaskDelayUntil(&xLastWakeTime, (4/portTICK_RATE_MS));
   }
 }
 
@@ -311,7 +312,7 @@ void Task3RTOS(void* pvParameter) {
   xLastWakeTime = xTaskGetTickCount(); 
 
   while (true) {
-    vTaskDelayUntil(&xLastWakeTime, (8/portTICK_RATE_MS));
+    
     byte pinState = digitalRead(T3_FREQ_IN); //store the digital value registered on the oin at startup
     float halfWave = pulseIn(T3_FREQ_IN, !pinState, 2000L); //the timeout of 3ms guaranteed that we will catch a wave with the lowest freq of 333Hz
     float pulse = 2*halfWave;
@@ -330,11 +331,12 @@ void Task3RTOS(void* pvParameter) {
             frequencies.freq2 = (int) freq2;
             xSemaphoreGive( xSemaphore );
         }
-        else
-        {
-            /* We could not obtain the semaphore and can therefore not access
-            the shared resource safely. */
-        }
+    else
+    {
+        /* We could not obtain the semaphore and can therefore not access
+        the shared resource safely. */
+    }
+    vTaskDelayUntil(&xLastWakeTime, (8/portTICK_RATE_MS));
     //Serial.println(freq1);
     
   }
@@ -380,7 +382,7 @@ void Task4RTOS(void* pvParameter) {
   xLastWakeTime = xTaskGetTickCount();
 
   while(true) {
-    vTaskDelayUntil(&xLastWakeTime, (20/portTICK_RATE_MS));
+    
     analogueReadings[arrayIndex] = analogRead(T4_ANALOG_PIN);
     arrayIndex = (arrayIndex + 1)%4;
     if (arrayStoreOperations < 4) {
@@ -396,6 +398,7 @@ void Task4RTOS(void* pvParameter) {
       digitalWrite(V_OUT, LOW);
     }
     analogValue = arraySum;
+    vTaskDelayUntil(&xLastWakeTime, (20/portTICK_RATE_MS));
   }
 }
 
@@ -428,7 +431,7 @@ void Task5RTOS(void* pvParameter) {
   int freq1 = 0;
   int freq2 = 0;
   while(true) {
-    vTaskDelayUntil(&xLastWakeTime, (100/portTICK_RATE_MS));
+    
     
     if (xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
     {
@@ -441,7 +444,7 @@ void Task5RTOS(void* pvParameter) {
     }
     else
     {
-      //Serial.println("Read Semaphore's BAD");
+      Serial.println("Read Semaphore's BAD");
 
         /* We could not obtain the semaphore and can therefore not access
         the shared resource safely. */
@@ -452,6 +455,7 @@ void Task5RTOS(void* pvParameter) {
     Serial.print(",");
     Serial.print(freq2mapped);
     Serial.println();
+    vTaskDelayUntil(&xLastWakeTime, (100/portTICK_RATE_MS));
   }
 }
 
