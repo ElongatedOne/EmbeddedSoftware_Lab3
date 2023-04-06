@@ -54,7 +54,7 @@ void setup() {
   
   xTaskCreatePinnedToCore(Task1RTOS,   // pointer to the task function
               "Task 1", // task name
-              1000,      // stack size in words
+              400,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
@@ -62,7 +62,7 @@ void setup() {
   
   xTaskCreatePinnedToCore(Task2RTOS,   // pointer to the task function
               "Task 2", // task name
-              1000,      // stack size in words
+              400,      // stack size in words
 			        NULL,     // stack parameter
               2,        // priority
               NULL,
@@ -70,7 +70,7 @@ void setup() {
 
   xTaskCreatePinnedToCore(Task3RTOS,   // pointer to the task function
               "Task 3", // task name
-              1000,      // stack size in words
+              400,      // stack size in words
 			        NULL,     // stack parameter
               3,        // priority
               NULL,
@@ -92,14 +92,14 @@ void setup() {
               app_cpu);    // task handle (not used) 
   xTaskCreatePinnedToCore(buttonPollingTask,   // pointer to the task function
               "Button poll", // task name
-              1000,      // stack size in words
+              600,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
   xTaskCreatePinnedToCore(ledTask,   // pointer to the task function
               "led task", // task name
-              1000,      // stack size in words
+              800,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
@@ -135,11 +135,10 @@ void buttonPollingTask(void* pvParameters) {
   while(true) {
     vTaskDelayUntil(&xLastWakeTime, (4/portTICK_RATE_MS));
     newRead = digitalRead(BUTTON_PIN);
+    /* debouncing code works by comparing the current and previous values to ensure there is no double-shot behaviour8*/
     if (newRead == true && lastRead == false) {
-      //event queue
+      //event queue sends a value of 1 to be recieved by the led function
       xStatus = xQueueSendToBack(xQueue, &output, 0);
-      Serial.print("Button pressed: ");
-      Serial.println(newRead);
 
     	if (xStatus != pdPASS) {
     		Serial.println("Could not send to the queue!\n");
@@ -168,19 +167,13 @@ void ledTask(void* pvParameters) {
   while(true) {
     vTaskDelayUntil(&xLastWakeTime, (8/portTICK_RATE_MS));
 
-    if (uxQueueMessagesWaiting(xQueue) != 0) {
-			Serial.println("Queue should have been empty!");
-		}
-
 		xStatus = xQueueReceive(xQueue, &input, xTicksToWait);
-
+  //if we recieved from queue successfuly 
 		if (xStatus == pdPASS) {
-			Serial.println("recieved a value for toggle");
       if (input == 1) {
+        //switch toggle
         toggle = !toggle;
-        Serial.print("Toggle = ");
-        Serial.println(toggle);
-
+        //set to either 1 or 0
         digitalWrite(BUTTON_LED, toggle);
       }
 		}
@@ -213,7 +206,6 @@ void Task1RTOS(void* pvParameters) {
 
   while(true) {
     
-    //Serial.println("wee");
     digitalWrite(T1_ANALOG_PORT, HIGH);
     delayMicroseconds(200);
     digitalWrite(T1_ANALOG_PORT, LOW);
@@ -459,14 +451,12 @@ void Task5RTOS(void* pvParameter) {
     {
         /*We were able to obtain the semaphore and can now access the
         shared resource.*/
-        //Serial.println("Read Semaphore's good");
         freq1 = frequencies.freq1;
         freq2 = frequencies.freq2;
         xSemaphoreGive( xSemaphore );
     }
     else
     {
-      Serial.println("Read Semaphore's BAD");
 
         /* We could not obtain the semaphore and can therefore not access
         the shared resource safely. */
