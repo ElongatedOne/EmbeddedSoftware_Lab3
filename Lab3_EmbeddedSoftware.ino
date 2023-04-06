@@ -26,8 +26,8 @@ xQueueHandle xQueue;
 //bool measurePerformance = false; //setting this to true enables the performance measuring code in loop(); see loop() for more info
 //float longestPerformance = 0.0; //longest completion time in microseconds
 //int testIterations = 10000; //number of test iterations the timing loop should run
-long freq1 = 0; //the value from Task2 stored as a float in Hz
-long freq2 = 0; //the value from Task3 stored as a float in Hz
+//long freq1 = 0; //the value from Task2 stored as a float in Hz
+//long freq2 = 0; //the value from Task3 stored as a float in Hz
 float analogueReadings[] = {0,0,0,0}; //initialise the array that stores the last 4 analogue reading of task4
 uint8_t arrayIndex = 0; //represents the index at which we write the analog value in the analogueReadings array
 uint8_t arrayStoreOperations = 0; //keeps track of how many times we added a number to an array;
@@ -261,6 +261,8 @@ void Task2RTOS(void* pvParameter) {
 
   xLastWakeTime = xTaskGetTickCount(); 
 
+  long freq1;
+
   while (true) {
     vTaskDelayUntil(&xLastWakeTime, (20/portTICK_RATE_MS));
     byte pinState = digitalRead(T2_FREQ_IN); //store the digital value registered on the oin at startup
@@ -328,6 +330,8 @@ void Task3RTOS(void* pvParameter) {
   portTickType xLastWakeTime;
 
   xLastWakeTime = xTaskGetTickCount(); 
+
+  long freq2;
 
   while (true) {
     
