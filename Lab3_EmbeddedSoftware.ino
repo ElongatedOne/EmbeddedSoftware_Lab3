@@ -48,10 +48,10 @@ void setup() {
   
   //if we arent running the performance loop, start the monitor and start the ticker
   
-  xSemaphore = xSemaphoreCreateBinary();
+  xSemaphore = xSemaphoreCreateBinary(); //initialise the semaphore to protect Task2 and Task3 readings
   xSemaphoreGive(xSemaphore);
 
-  xQueue = xQueueCreate(5, sizeof(int));
+  xQueue = xQueueCreate(5, sizeof(int)); //create a queue
   
   xTaskCreatePinnedToCore(Task1RTOS,   // pointer to the task function
               "Task 1", // task name
