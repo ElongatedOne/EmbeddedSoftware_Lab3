@@ -10,7 +10,7 @@ static const BaseType_t app_cpu = 0;
 #define V_OUT 4 //pin for turning on the LED for Task4
 #define T4_ANALOG_PIN 5 //GPIO for reading in the analog voltage for Task4
 #define BUTTON_PIN 7
-#define BUTTON_LED 8
+#define BUTTON_LED LED_BUILTIN
 
 struct frequencyStruct {
 int freq1 = 0;
@@ -56,7 +56,7 @@ void setup() {
               "Task 1", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
-              2,        // priority
+              1,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
   
@@ -64,7 +64,7 @@ void setup() {
               "Task 2", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
-              3,        // priority
+              2,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
 
@@ -72,7 +72,7 @@ void setup() {
               "Task 3", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
-              4,        // priority
+              3,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
 
@@ -80,11 +80,25 @@ void setup() {
               "Task 4", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
-              2,        // priority
+              1,        // priority
               NULL,
               app_cpu);    // task handle (not used) 
   xTaskCreatePinnedToCore(Task5RTOS,   // pointer to the task function
               "Task 6", // task name
+              1000,      // stack size in words
+			        NULL,     // stack parameter
+              1,        // priority
+              NULL,
+              app_cpu);    // task handle (not used) 
+  xTaskCreatePinnedToCore(buttonPollingTask,   // pointer to the task function
+              "Button poll", // task name
+              1000,      // stack size in words
+			        NULL,     // stack parameter
+              1,        // priority
+              NULL,
+              app_cpu);    // task handle (not used) 
+  xTaskCreatePinnedToCore(ledTask,   // pointer to the task function
+              "led task", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
@@ -119,11 +133,13 @@ void buttonPollingTask(void* pvParameters) {
   int output = 1;
 
   while(true) {
-    vTaskDelayUntil(&xLastWakeTime, (40/portTICK_RATE_MS));
+    vTaskDelayUntil(&xLastWakeTime, (4/portTICK_RATE_MS));
     newRead = digitalRead(BUTTON_PIN);
     if (newRead == true && lastRead == false) {
       //event queue
       xStatus = xQueueSendToBack(xQueue, &output, 0);
+      Serial.print("Button pressed: ");
+      Serial.println(newRead);
 
     	if (xStatus != pdPASS) {
     		Serial.println("Could not send to the queue!\n");
@@ -159,15 +175,17 @@ void ledTask(void* pvParameters) {
 		xStatus = xQueueReceive(xQueue, &input, xTicksToWait);
 
 		if (xStatus == pdPASS) {
-			Serial.println("recieved a value");
+			Serial.println("recieved a value for toggle");
       if (input == 1) {
-        toggle = ~toggle;
+        toggle = !toggle;
+        Serial.print("Toggle = ");
+        Serial.println(toggle);
 
         digitalWrite(BUTTON_LED, toggle);
       }
 		}
 		else {
-			Serial.println("Could not receive from the queue!");
+			//Serial.println("Could not receive from the queue!");
 		}
   }   
 }
