@@ -10,6 +10,7 @@ static const BaseType_t app_cpu = 0;
 #define V_OUT 4 //pin for turning on the LED for Task4
 #define T4_ANALOG_PIN 5 //GPIO for reading in the analog voltage for Task4
 #define BUTTON_PIN 7
+#define BUTTON_LED 8
 
 struct frequencyStruct {
 int freq1 = 0;
@@ -19,6 +20,8 @@ int freq2 = 0;
 struct frequencyStruct frequencies;
 
 SemaphoreHandle_t xSemaphore = NULL;
+
+xQueueHandle xQueue;
 
 //bool measurePerformance = false; //setting this to true enables the performance measuring code in loop(); see loop() for more info
 //float longestPerformance = 0.0; //longest completion time in microseconds
@@ -38,6 +41,7 @@ void setup() {
   pinMode(V_OUT, OUTPUT);
   pinMode(T4_ANALOG_PIN, INPUT);
   pinMode(BUTTON_PIN, INPUT);
+  pinMode(BUTTON_LED, OUTPUT);
   //internal pull-ups
   Serial.begin(9600); // start serial connection at a baud rate of 9600
   
@@ -45,6 +49,8 @@ void setup() {
   
   xSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(xSemaphore);
+
+  xQueue = xQueueCreate(5, sizeof(int));
   
   xTaskCreatePinnedToCore(Task1RTOS,   // pointer to the task function
               "Task 1", // task name
@@ -108,16 +114,63 @@ void buttonPollingTask(void* pvParameters) {
 
   bool lastRead, newRead = false;
 
+  portBASE_TYPE xStatus;
+
+  int output = 1;
+
   while(true) {
     vTaskDelayUntil(&xLastWakeTime, (40/portTICK_RATE_MS));
     newRead = digitalRead(BUTTON_PIN);
     if (newRead == true && lastRead == false) {
       //event queue
+      xStatus = xQueueSendToBack(xQueue, &output, 0);
+
+    	if (xStatus != pdPASS) {
+    		Serial.println("Could not send to the queue!\n");
+    	}
     }
     lastRead = newRead;
 
   }
-} 
+}
+
+//LED task
+void ledTask(void* pvParameters) {
+
+  portTickType xLastWakeTime;
+
+  xLastWakeTime = xTaskGetTickCount();
+
+  portBASE_TYPE xStatus;
+
+  const portTickType xTicksToWait = 10 / portTICK_RATE_MS;
+
+  int input = 0;
+
+  bool toggle = false;
+
+  while(true) {
+    vTaskDelayUntil(&xLastWakeTime, (8/portTICK_RATE_MS));
+
+    if (uxQueueMessagesWaiting(xQueue) != 0) {
+			Serial.println("Queue should have been empty!");
+		}
+
+		xStatus = xQueueReceive(xQueue, &input, xTicksToWait);
+
+		if (xStatus == pdPASS) {
+			Serial.println("recieved a value");
+      if (input == 1) {
+        toggle = ~toggle;
+
+        digitalWrite(BUTTON_LED, toggle);
+      }
+		}
+		else {
+			Serial.println("Could not receive from the queue!");
+		}
+  }   
+}
 
 
 //Outputs a signal HIGH for 200us and LOW for 50us, and HIGH for 30us
