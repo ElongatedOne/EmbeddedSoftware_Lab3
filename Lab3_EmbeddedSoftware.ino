@@ -42,6 +42,7 @@ void setup() {
   pinMode(T4_ANALOG_PIN, INPUT);
   pinMode(BUTTON_PIN, INPUT);
   pinMode(BUTTON_LED, OUTPUT);
+  pinMode(8, OUTPUT);
   //internal pull-ups
   Serial.begin(9600); // start serial connection at a baud rate of 9600
   
@@ -141,7 +142,7 @@ void buttonPollingTask(void* pvParameters) {
       xStatus = xQueueSendToBack(xQueue, &output, 0);
 
     	if (xStatus != pdPASS) {
-    		Serial.println("Could not send to the queue!\n");
+    		//Serial.println("Could not send to the queue!\n");
     	}
     }
     lastRead = newRead;
@@ -461,8 +462,8 @@ void Task5RTOS(void* pvParameter) {
         /* We could not obtain the semaphore and can therefore not access
         the shared resource safely. */
     }
-    int freq1mapped = constrain(map(freq1, 300, 1000, 0, 99), 0, 99);
-    int freq2mapped = constrain(map(freq2, 300, 1000, 0, 99), 0, 99);  
+    int freq1mapped = constrain(map(freq1, 333, 1000, 0, 99), 0, 99);
+    int freq2mapped = constrain(map(freq2, 500, 1000, 0, 99), 0, 99);  
     Serial.print(freq1mapped);
     Serial.print(",");
     Serial.print(freq2mapped);
