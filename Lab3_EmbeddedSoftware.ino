@@ -9,6 +9,7 @@ static const BaseType_t app_cpu = 0;
 #define T3_FREQ_IN 2 //GPIO for reading the frequency for Task3. 500-1000Hz, 50% duty cycle
 #define V_OUT 4 //pin for turning on the LED for Task4
 #define T4_ANALOG_PIN 5 //GPIO for reading in the analog voltage for Task4
+#define BUTTON_PIN 7
 
 struct frequencyStruct {
 int freq1 = 0;
@@ -36,6 +37,7 @@ void setup() {
   pinMode(T3_FREQ_IN, INPUT);
   pinMode(V_OUT, OUTPUT);
   pinMode(T4_ANALOG_PIN, INPUT);
+  pinMode(BUTTON_PIN, INPUT);
   //internal pull-ups
   Serial.begin(9600); // start serial connection at a baud rate of 9600
   
@@ -96,6 +98,26 @@ the frame function is called by the Ticker object every 4ms
 The switch structure controlls which frame is called, indexed by the frameCount integer
 this integer is increased by 1 at the end of the function and the % operator keeps it bounded between 0 and 49
 */
+
+//Button read
+void buttonPollingTask(void* pvParameters) {
+
+  portTickType xLastWakeTime;
+
+  xLastWakeTime = xTaskGetTickCount(); 
+
+  bool lastRead, newRead = false;
+
+  while(true) {
+    vTaskDelayUntil(&xLastWakeTime, (40/portTICK_RATE_MS));
+    newRead = digitalRead(BUTTON_PIN);
+    if (newRead == true && lastRead == false) {
+      //event queue
+    }
+    lastRead = newRead;
+
+  }
+} 
 
 
 //Outputs a signal HIGH for 200us and LOW for 50us, and HIGH for 30us
