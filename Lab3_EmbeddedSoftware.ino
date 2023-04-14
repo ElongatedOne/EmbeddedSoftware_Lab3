@@ -9,19 +9,19 @@ static const BaseType_t app_cpu = 0;
 #define T3_FREQ_IN 2 //GPIO for reading the frequency for Task3. 500-1000Hz, 50% duty cycle
 #define V_OUT 4 //pin for turning on the LED for Task4
 #define T4_ANALOG_PIN 5 //GPIO for reading in the analog voltage for Task4
-#define BUTTON_PIN 7
-#define BUTTON_LED LED_BUILTIN
+#define BUTTON_PIN 7 //pin used for reading the state of the button
+#define BUTTON_LED LED_BUILTIN //the pin used for controlling the LED toggled by the button
 
 struct frequencyStruct {
 int freq1 = 0;
 int freq2 = 0;  
 };
 
-struct frequencyStruct frequencies;
+struct frequencyStruct frequencies; //instance of a frequencyStruct struct
 
-SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t xSemaphore = NULL; //make a new reference to a semaphore
 
-xQueueHandle xQueue;
+xQueueHandle xQueue; //create a new queue
 
 //bool measurePerformance = false; //setting this to true enables the performance measuring code in loop(); see loop() for more info
 //float longestPerformance = 0.0; //longest completion time in microseconds
@@ -49,9 +49,9 @@ void setup() {
   //if we arent running the performance loop, start the monitor and start the ticker
   
   xSemaphore = xSemaphoreCreateBinary(); //initialise the semaphore to protect Task2 and Task3 readings
-  xSemaphoreGive(xSemaphore);
+  xSemaphoreGive(xSemaphore); //start the samaphore as available; giva a value of +1
 
-  xQueue = xQueueCreate(5, sizeof(int)); //create a queue
+  xQueue = xQueueCreate(5, sizeof(int)); //create a queue for the input handling implementation
   
   xTaskCreatePinnedToCore(Task1RTOS,   // pointer to the task function
               "Task 1", // task name
@@ -59,7 +59,7 @@ void setup() {
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);    
   
   xTaskCreatePinnedToCore(Task2RTOS,   // pointer to the task function
               "Task 2", // task name
@@ -67,7 +67,7 @@ void setup() {
 			        NULL,     // stack parameter
               2,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);     
 
   xTaskCreatePinnedToCore(Task3RTOS,   // pointer to the task function
               "Task 3", // task name
@@ -75,7 +75,7 @@ void setup() {
 			        NULL,     // stack parameter
               3,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);    
 
   xTaskCreatePinnedToCore(Task4RTOS,   // pointer to the task function
               "Task 4", // task name
@@ -83,28 +83,28 @@ void setup() {
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);    
   xTaskCreatePinnedToCore(Task5RTOS,   // pointer to the task function
               "Task 6", // task name
               1000,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);   
   xTaskCreatePinnedToCore(buttonPollingTask,   // pointer to the task function
               "Button poll", // task name
               600,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);   
   xTaskCreatePinnedToCore(ledTask,   // pointer to the task function
               "led task", // task name
               800,      // stack size in words
 			        NULL,     // stack parameter
               1,        // priority
               NULL,
-              app_cpu);    // task handle (not used) 
+              app_cpu);   
 
   //vTaskStartScheduler();
   
@@ -114,11 +114,7 @@ void loop() {
 
 }
 
-/*
-the frame function is called by the Ticker object every 4ms
-The switch structure controlls which frame is called, indexed by the frameCount integer
-this integer is increased by 1 at the end of the function and the % operator keeps it bounded between 0 and 49
-*/
+
 
 //Button read
 void buttonPollingTask(void* pvParameters) {
@@ -187,17 +183,6 @@ void ledTask(void* pvParameters) {
 
 //Outputs a signal HIGH for 200us and LOW for 50us, and HIGH for 30us
 //Repeats every 4ms; T1 = 4ms;
-//longest completion time: 304microseconds
-//
-/*void Task1(uint8_t pin) {
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(200);
-  digitalWrite(pin, LOW);
-  delayMicroseconds(50);
-  digitalWrite(pin,HIGH);
-  delayMicroseconds(30);
-  digitalWrite(pin, LOW);
-} */
 
 void Task1RTOS(void* pvParameters) {
 
@@ -232,22 +217,6 @@ the amount of time is measured as a length of one pulse, in microseconds
 Since the duty-cycle is 50%, the time is doubled to obtain the time of the full pulse.
 Before returning the period is converted to frequency in Hz.
 */
-//worst runtime 3020 microseconds
-/*void Task2(uint8_t pin) {
-
-  byte pinState = digitalRead(pin); //store the digital value registered on the oin at startup
-  float halfWave = pulseIn(pin, !pinState, 3000L); //the timeout of 3ms guaranteed that we will catch a wave with the lowest freq of 333Hz
-  float pulse = 2*halfWave;
-  //prevent a division by 0
-  if (pulse != 0) {
-    freq1 = 1000000/pulse;
-  }
-  else {
-    freq1 = 0;
-  }
-
-} */
-
 void Task2RTOS(void* pvParameter) {
 
   portTickType xLastWakeTime;
@@ -303,20 +272,7 @@ the amount of time is measured as a length of one pulse, in microseconds
 Since the duty-cycle is 50%, the time is doubled to obtain the time of the full pulse.
 Before returning the period is converted to frequency in Hz.
 */
-//longest execution 2502microsecond
-/*void Task3(uint8_t pin) {
 
-  byte pinState = digitalRead(pin); //store the digital value registered on the pin at startup
-  float halfWave = pulseIn(pin, !pinState, 2000L); //the timeout of 2ms guaranteed that we will catch a wave with the lowest freq of 500Hz
-  float pulse = 2*halfWave;
-  if (pulse != 0) {
-    freq2 = 1000000/pulse;
-  }
-  else {
-    freq2 = 0;
-  }
-
-} */
 
 void Task3RTOS(void* pvParameter) {
 
@@ -369,26 +325,6 @@ After it reaches 4, it will stay 4 untill the system is reset
 When the computed sum is more than half of the total range (12bit ADC means 4096 => half is 4096/2) a high signal
 is written to the ledPin, toggling an LED
 */
-//162 microseconds
-/*void Task4(uint8_t readPin, uint8_t ledPin) {
-
-  analogueReadings[arrayIndex] = analogRead(readPin);
-  arrayIndex = (arrayIndex + 1)%4;
-  if (arrayStoreOperations < 4) {
-    arrayStoreOperations++;
-  }
-  float arraySum = analogueReadings[0] + analogueReadings[1] + analogueReadings[2] + analogueReadings[3];
-  arraySum = arraySum/arrayStoreOperations;
-  //esp32 has a 12bit adc so 4096 is the highest read possible (3.3V)
-  if (arraySum > 4096/2) {
-    digitalWrite(ledPin, HIGH);
-  }
-  else {
-    digitalWrite(ledPin, LOW);
-  }
-  analogValue = arraySum;
-
-} */
 
 void Task4RTOS(void* pvParameter) {
 
@@ -423,19 +359,6 @@ in a range between 0-99 where 0 corresponds to a frequency of 333Hz/500hz or low
 
 The data is converted using the map() and constrain() methods
 */
-//999us
-/*void Task5(float freq1In, int freq1low, int freq1high, float freq2In, int freq2low, int freq2high) {
-
-  int freq1mapped = constrain(map(freq1In, freq1low, freq1high, 0, 99), 0, 99);
-  int freq2mapped = constrain(map(freq2In, freq2low, freq2high, 0, 99), 0, 99);  
-  Serial.print(freq1mapped);
-  Serial.print(",");
-  Serial.print(freq2mapped);
-  Serial.println();
-  delay(1); //delay to stabilise the print
-
-
-} */
 
 void Task5RTOS(void* pvParameter) {
 
